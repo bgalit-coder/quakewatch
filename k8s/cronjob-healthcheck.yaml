@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quakewatch-internal-healthcheck
+  namespace: quakewatch
+spec:
+  schedule: "*/2 * * * *"   
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:8.5.0
+              args:
+                - /bin/sh
+                - -lc
+                - |
+                  set -e
+                  echo "Checking service from inside the cluster..."
+                  curl -fsS --max-time 3 \
+                       --retry 5 \
+                       --retry-delay 2 \
+                       --retry-connrefused \
+                       http://quakewatch-svc:8000/ >/dev/null
+                  echo "OK - service is up"
