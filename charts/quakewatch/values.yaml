@@ -1,0 +1,54 @@
+fullnameOverride: quakewatch
+replicaCount: 2
+
+image:
+  repository: bgalit/quakewatch
+  tag: "1.0"
+  pullPolicy: Always
+
+service:
+  name: quakewatch-svc
+  type: ClusterIP
+  port: 8000
+  targetPort: 5000
+
+containerPort: 5000
+
+probes:
+  readiness:
+    path: /
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  liveness:
+    path: /
+    initialDelaySeconds: 15
+    periodSeconds: 10
+
+configMapRefName: quakewatch-config
+secretRefName: quakewatch-secret
+
+config:
+  appEnv: "production"
+  logLevel: "info"
+
+secret:
+  apiKey: "dummy-key-for-course"
+  
+hpa:
+  minReplicas: 2
+  maxReplicas: 5
+  cpuAverageUtilization: 60
+
+healthcheck:
+  schedule: "*/2 * * * *"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  backoffLimit: 0
+  image:
+    repository: curlimages/curl
+    tag: "8.5.0"
+  curl:
+    maxTimeSeconds: 3
+    retries: 5
+    retryDelaySeconds: 2
+

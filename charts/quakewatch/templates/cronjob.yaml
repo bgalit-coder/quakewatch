@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quakewatch-internal-healthcheck
+  labels:
+    app: quakewatch
+spec:
+  schedule: {{ .Values.healthcheck.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.healthcheck.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.healthcheck.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.healthcheck.backoffLimit }}
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: "{{ .Values.healthcheck.image.repository }}:{{ .Values.healthcheck.image.tag }}"
+              args:
+                - /bin/sh
+                - -lc
+                - |
+                  set -e
+                  echo "Checking service from inside the cluster..."
+                  curl -fsS --max-time {{ .Values.healthcheck.curl.maxTimeSeconds }} \
+                       --retry {{ .Values.healthcheck.curl.retries }} \
+                       --retry-delay {{ .Values.healthcheck.curl.retryDelaySeconds }} \
+                       --retry-connrefused \
+                       http://{{ .Values.service.name }}:{{ .Values.service.port }}/ >/dev/null
+                  echo "OK - service is up"
+
