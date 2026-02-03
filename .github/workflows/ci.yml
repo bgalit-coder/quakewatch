@@ -1,4 +1,4 @@
-name: CI (lint + build)
+name: CI (pylint + docker build)
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pylint
 
-       - name: Run pylint
+      - name: Run pylint (skip if no .py files tracked)
         shell: bash
         run: |
           set -e
@@ -34,11 +34,10 @@ jobs:
             exit 0
           fi
           pylint $PYFILES
- 
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Docker build (no push)
-        run: |
-          docker build -t quakewatch:ci .
+        run: docker build -t quakewatch:ci .
 
