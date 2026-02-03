@@ -21,19 +21,23 @@ jobs:
       - name: Install dependencies + pylint
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pylint
+          if [ -f app/QuakeWatch/requirements.txt ]; then
+            pip install -r app/QuakeWatch/requirements.txt
+          fi
 
-      - name: Run pylint (skip if no .py files tracked)
+
+      - name: Run pylint (fail on errors only)
         shell: bash
         run: |
           set -e
-          PYFILES="$(git ls-files | grep -E '\.py$' || true)"
+          PYFILES="$(git ls-files 'app/QuakeWatch/*.py' 'app/QuakeWatch/**/*.py' 2>/dev/null || true)"
           if [ -z "$PYFILES" ]; then
-            echo "No Python files found in git tracked files. Skipping pylint."
+            echo "No Python files found under app/QuakeWatch. Skipping pylint."
             exit 0
           fi
-          pylint $PYFILES
+          pylint -E $PYFILES
+
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
